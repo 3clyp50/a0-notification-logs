@@ -1,0 +1,103 @@
+<html>
+<head>
+  <title>Notification Logs</title>
+  <script type="module">
+    import { store } from "/plugins/notification_logs/webui/logs-store.js";
+  </script>
+</head>
+<body>
+  <div x-data>
+    <template x-if="$store.notificationLogs">
+      <div class="notification-logs" x-create="$store.notificationLogs.mount()" x-destroy="$store.notificationLogs.unmount()">
+        <div class="modal-subheader notification-logs-toolbar">
+          <input type="text" role="searchbox" placeholder="Search" aria-label="Search logs"
+                 x-model.debounce.150ms="$store.notificationLogs.query" @input="$store.notificationLogs.limit = 100">
+          <select aria-label="Severity" x-model="$store.notificationLogs.severity" @change="$store.notificationLogs.limit = 100">
+            <option value="">All</option>
+            <option value="error">Error</option>
+            <option value="warning">Warning</option>
+            <option value="info">Info</option>
+            <option value="success">Success</option>
+            <option value="progress">Progress</option>
+          </select>
+        </div>
+
+        <div class="notification-logs-list" :aria-busy="$store.notificationLogs.loading">
+          <template x-for="entry in $store.notificationLogs.visible" :key="entry.id">
+            <details class="notification-log" :class="'notification-' + entry.type" x-data>
+              <summary>
+                <x-icon class="notification-log-severity" :name="$store.notificationLogs.icon(entry.type)" :title="entry.type"></x-icon>
+                <div class="notification-log-summary">
+                  <div class="notification-log-heading">
+                    <strong x-text="entry.title || entry.type"></strong>
+                    <time :datetime="new Date(entry.time).toISOString()" x-text="$store.notificationLogs.date(entry)"></time>
+                  </div>
+                  <div class="notification-log-preview" x-text="entry.message || entry.detail"></div>
+                </div>
+                <x-icon class="notification-log-chevron" name="expand_more"></x-icon>
+              </summary>
+              <div class="notification-log-body">
+                <pre x-show="entry.message" x-text="entry.message"></pre>
+                <pre x-show="entry.detail" x-text="entry.detail"></pre>
+                <div class="notification-log-actions">
+                  <span x-text="entry.source"></span>
+                  <div x-create="$el.replaceChildren($store.notificationLogs.copyButton(entry))"></div>
+                </div>
+              </div>
+            </details>
+          </template>
+          <div class="notification-logs-empty" x-show="!$store.notificationLogs.loading && !$store.notificationLogs.filtered.length">
+            <x-icon name="history"></x-icon>
+            <p x-text="$store.notificationLogs.entries.length ? 'No matches' : 'No logs'"></p>
+          </div>
+          <button type="button" class="text-button notification-logs-more"
+                  x-show="$store.notificationLogs.filtered.length > $store.notificationLogs.limit"
+                  @click="$store.notificationLogs.limit += 100">Show more</button>
+        </div>
+        <div class="modal-footer" data-modal-footer>
+          <button type="button" class="btn btn-cancel" :disabled="!$store.notificationLogs.entries.length"
+                  @click="$confirmClick($event, () => $store.notificationLogs.clear())">
+            <x-icon name="delete"></x-icon> Clear All
+          </button>
+        </div>
+      </div>
+    </template>
+  </div>
+  <style>
+    .notification-logs-toolbar { display: flex; gap: var(--spacing-sm); }
+    .notification-logs-toolbar input { flex: 1; min-width: 0; }
+    .notification-logs-toolbar select { width: auto; min-width: 7rem; }
+    .notification-logs-list { display: flex; flex-direction: column; gap: var(--spacing-sm); }
+    .notification-log { border: 1px solid var(--color-border); border-radius: var(--border-radius-sm); background: var(--color-panel); }
+    .notification-log summary { display: flex; gap: var(--spacing-sm); align-items: center; padding: var(--spacing-md); cursor: pointer; list-style: none; }
+    .notification-log summary::-webkit-details-marker { display: none; }
+    .notification-log summary:hover { background: var(--color-background); }
+    .notification-log summary:focus-visible { outline: 2px solid var(--color-text); outline-offset: -2px; }
+    .notification-log-summary { flex: 1; min-width: 0; }
+    .notification-log-heading { display: flex; align-items: baseline; gap: var(--spacing-sm); }
+    .notification-log-heading strong { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-size-smaller); }
+    .notification-log time, .notification-log-actions > span { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+    .notification-log time { flex-shrink: 0; }
+    .notification-log-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-size-small); color: var(--color-text-muted); margin-top: var(--spacing-xs); }
+    .notification-log-severity { flex-shrink: 0; }
+    .notification-log.notification-error .notification-log-severity { color: #f44336; }
+    .notification-log.notification-warning .notification-log-severity { color: #ff9800; }
+    .notification-log.notification-success .notification-log-severity { color: #4caf50; }
+    .notification-log.notification-info .notification-log-severity { color: var(--color-highlight); }
+    .notification-log.notification-progress .notification-log-severity { color: #9c27b0; }
+    .notification-log-chevron { flex-shrink: 0; }
+    .notification-log[open] .notification-log-chevron { transform: rotate(180deg); }
+    .notification-log-body { padding: 0 var(--spacing-md) var(--spacing-md); border-top: 1px solid var(--color-border); }
+    .notification-log-body pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: var(--spacing-md) 0; color: var(--color-text); font-size: var(--font-size-small); font-family: var(--font-family-code); }
+    .notification-log-actions { display: flex; align-items: center; justify-content: space-between; }
+    .notification-log-actions .action-button { gap: var(--spacing-xs); color: var(--color-text); font-size: var(--font-size-small); padding: var(--spacing-xs); }
+    .notification-logs-empty { text-align: center; padding: 3rem 1rem; color: var(--color-text-muted); }
+    .notification-logs-empty > x-icon { font-size: 2rem; }
+    .notification-logs-more { align-self: center; margin: var(--spacing-sm); }
+    @media (max-width: 600px) {
+      .notification-log-heading { flex-direction: column; gap: var(--spacing-xs); }
+      .notification-log-heading strong { width: 100%; }
+    }
+  </style>
+</body>
+</html>

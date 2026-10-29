@@ -1,0 +1,16 @@
+<html>
+<head>
+  <script type="module">
+    import { store } from "/plugins/notification_logs/webui/logs-store.js";
+  </script>
+</head>
+<body>
+  <div x-data>
+    <template x-if="$store.notificationLogs">
+      <button type="button" class="notification-action" @click="$store.notificationLogs.show()">
+        <x-icon name="history"></x-icon> Logs
+      </button>
+    </template>
+  </div>
+</body>
+</html>

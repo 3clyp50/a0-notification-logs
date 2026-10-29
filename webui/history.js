@@ -63,7 +63,7 @@ export async function saveRecord(record) {
     if (record.time <= (cutoff.result?.[record.source] || 0)) return;
     const existing = entries.get(record.id);
     existing.onsuccess = () => {
-      if (existing.result && JSON.stringify(existing.result) === JSON.stringify(record)) return;
+      if (existing.result) return;
       entries.put(record);
       saved = true;
       const count = entries.count();

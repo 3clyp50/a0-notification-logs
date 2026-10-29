@@ -105,6 +105,7 @@ def test_persistence_safe_rendering_search_copy_and_clear(browser, width):
     page.wait_for_function('window.logs && logs.entries.length === 2')
     capture(page)
     assert page.evaluate('logs.entries.length') == 2
+    assert page.evaluate("logs.entries.find(entry => entry.type === 'error').message.includes('LAST LINE')")
     second = context.new_page()
     load(second)
     capture(second)

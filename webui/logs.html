@@ -31,6 +31,7 @@
                   <div class="notification-log-heading">
                     <strong x-text="entry.title || entry.type"></strong>
                     <time :datetime="new Date(entry.time).toISOString()" x-text="$store.notificationLogs.date(entry)"></time>
+                    <div class="notification-log-copy" x-create="$el.replaceChildren($store.notificationLogs.copyButton(entry))"></div>
                   </div>
                   <div class="notification-log-preview" x-text="entry.message || entry.detail"></div>
                 </div>
@@ -39,10 +40,7 @@
               <div class="notification-log-body">
                 <pre x-show="entry.message" x-text="entry.message"></pre>
                 <pre x-show="entry.detail" x-text="entry.detail"></pre>
-                <div class="notification-log-actions">
-                  <span x-text="entry.source"></span>
-                  <div x-create="$el.replaceChildren($store.notificationLogs.copyButton(entry))"></div>
-                </div>
+                <span class="notification-log-source" x-text="entry.source"></span>
               </div>
             </details>
           </template>
@@ -74,9 +72,9 @@
     .notification-log summary:hover { background: var(--color-background); }
     .notification-log summary:focus-visible { outline: 2px solid var(--color-text); outline-offset: -2px; }
     .notification-log-summary { flex: 1; min-width: 0; }
-    .notification-log-heading { display: flex; align-items: baseline; gap: var(--spacing-sm); }
-    .notification-log-heading strong { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-size-smaller); }
-    .notification-log time, .notification-log-actions > span { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+    .notification-log-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--spacing-sm); }
+    .notification-log-heading strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-size-smaller); }
+    .notification-log time, .notification-log-source { font-size: var(--font-size-xs); color: var(--color-text-muted); }
     .notification-log time { flex-shrink: 0; }
     .notification-log-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-size-small); color: var(--color-text-muted); margin-top: var(--spacing-xs); }
     .notification-log-severity { flex-shrink: 0; }
@@ -89,14 +87,15 @@
     .notification-log[open] .notification-log-chevron { transform: rotate(180deg); }
     .notification-log-body { padding: 0 var(--spacing-md) var(--spacing-md); border-top: 1px solid var(--color-border); }
     .notification-log-body pre { white-space: pre-wrap; overflow-wrap: anywhere; margin: var(--spacing-md) 0; color: var(--color-text); font-size: var(--font-size-small); font-family: var(--font-family-code); }
-    .notification-log-actions { display: flex; align-items: center; justify-content: space-between; }
-    .notification-log-actions .action-button { gap: var(--spacing-xs); color: var(--color-text); font-size: var(--font-size-small); padding: var(--spacing-xs); }
+    .notification-log-copy { display: flex; }
+    .notification-log-copy .action-button { gap: var(--spacing-xs); color: var(--color-text); font-size: var(--font-size-small); padding: var(--spacing-xs); }
     .notification-logs-empty { text-align: center; padding: 3rem 1rem; color: var(--color-text-muted); }
     .notification-logs-empty > x-icon { font-size: 2rem; }
     .notification-logs-more { align-self: center; margin: var(--spacing-sm); }
     @media (max-width: 600px) {
-      .notification-log-heading { flex-direction: column; gap: var(--spacing-xs); }
-      .notification-log-heading strong { width: 100%; }
+      .notification-log-heading { grid-template-columns: minmax(0, 1fr) auto; gap: var(--spacing-xs); }
+      .notification-log-heading time { grid-column: 1 / -1; grid-row: 2; }
+      .notification-log-copy { grid-column: 2; grid-row: 1; }
     }
   </style>
 </body>

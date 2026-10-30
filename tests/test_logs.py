@@ -79,7 +79,7 @@ def capture(page, id='one', message='<b>Failure &amp; details</b><br>LAST LINE',
     }''', dict(id=id,message=message,type=type))
 
 
-@pytest.mark.parametrize('width', [1100, 390])
+@pytest.mark.parametrize('width', [1100, 320])
 def test_persistence_safe_rendering_search_copy_and_clear(browser, width):
     context = browser.new_context(viewport={'width':width,'height':800})
     page = context.new_page()
@@ -91,13 +91,26 @@ def test_persistence_safe_rendering_search_copy_and_clear(browser, width):
     assert page.evaluate('logs.entries.length') == 2
     page.get_by_label('Severity', exact=True).select_option('error')
     playwright.expect(page.locator('details')).to_have_count(1)
-    page.locator('summary').click()
-    playwright.expect(page.get_by_role('button', name='Copy', exact=True)).to_be_visible()
+    entry = page.locator('details')
+    copy = entry.locator('summary').get_by_role('button', name='Copy', exact=True)
+    playwright.expect(copy).to_be_visible()
+    assert not entry.evaluate('element => element.open')
     page.evaluate('() => { navigator.clipboard.writeText = async text => { window.copied = text; }; }')
-    page.get_by_role('button', name='Copy', exact=True).click()
+    copy.click()
+    assert not entry.evaluate('element => element.open')
     copied = page.evaluate('window.copied')
     assert 'Failure & details' in copied and 'LAST LINE' in copied and 'Detail line 2' in copied
     assert '<script>' not in copied and '<b>' not in copied
+    assert '2026-10-29T10:00:00.000Z' in copied and 'backend' in copied and 'Test error' in copied
+    for key in ['Enter', 'Space']:
+        copy.press(key)
+        assert not entry.evaluate('element => element.open')
+        assert page.evaluate('window.copied') == copied
+    entry.locator('summary strong').click()
+    assert entry.evaluate('element => element.open')
+    copy.click()
+    assert entry.evaluate('element => element.open')
+    assert page.evaluate('window.copied') == copied
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
     page.get_by_label('Search logs').fill('not present')
     playwright.expect(page.get_by_text('No matches', exact=True)).to_be_visible()

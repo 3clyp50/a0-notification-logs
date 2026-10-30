@@ -18,7 +18,7 @@ Requires the Agent Zero `ready` frontend with the `notification_received` and `n
 
 1. Open **Notifications** from the bell and select **Logs**. The button works even when the current notification list is empty.
 2. Search or choose a severity. Expand an entry to read its message and details.
-3. Select **Copy** to copy the timestamp, severity, source, title, message, and details.
+3. Select **Copy** in an entry's header to copy the timestamp, severity, source, title, message, and details, even while collapsed.
 4. **Clear All → Confirm** removes the log in this browser. Clearing ordinary notifications does not erase this history.
 
 The newest 100 entries are shown first; **Show more** reveals the next page. Entries update across tabs of the same origin.
